@@ -11,3 +11,7 @@ Route::redirect('/', '/registro');
 
 
 Route::view('/registro', 'app');
+
+route::view('/login', 'app');
+
+Route::view('/dashboard', 'app')->middleware('auth:web');

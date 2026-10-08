@@ -1,5 +1,5 @@
 import { useState } from "react";
-
+import { enviarFormulario } from "../api.js";
 const camposIniciales = {
     name: '',
     email: '',
@@ -30,14 +30,7 @@ export default function Registro() {
         setMensaje('Guardando...');
 
         try {
-            const respuesta = await fetch('/api/registrar', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json',
-                },
-                body: JSON.stringify(datos),
-            });
+           const respuesta = await enviarFormulario('/api/registrar', datos);
 
             const resultado = await respuesta.json();
 
@@ -159,6 +152,12 @@ export default function Registro() {
                 </button>
 
                 <p role="status">{mensaje}</p>
+                <p className="text-center text-sm text-[#555555]">
+    ¿Ya tienes una cuenta?{' '}
+    <a href="/login" className="font-semibold text-[#124277] underline">
+        Inicia sesión
+    </a>
+</p>
             </form>
         </main>
     );
