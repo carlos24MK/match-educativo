@@ -26,6 +26,7 @@ export default function Login() {
                 // Comprueba que Laravel reconoce la sesión en otra petición.
                 const sesion = await fetch('/api/user', {
                     credentials: 'same-origin',
+                    cache: 'no-store',
                     headers: { Accept: 'application/json' },
                 });
 
@@ -40,12 +41,15 @@ export default function Login() {
                 setMensaje(errores.join(' ') || 'Revisa los datos enviados.');
             } else if (respuesta.status === 429) {
                 setMensaje('Demasiados intentos. Espera un minuto.');
+            } else if (respuesta.status === 419) {
+                setMensaje('La sesión venció. Recarga la página.');
             } else {
                 setMensaje('No se pudo iniciar sesión.');
             }
         } catch {
             setMensaje('No se pudo completar la petición. Revisa la conexión y Laravel.');
         } finally {
+            setDatos({ ...datos, password: '' });
             setEnviando(false);
         }
     }
@@ -98,11 +102,16 @@ export default function Login() {
                         value={datos.password}
                         onChange={cambiarCampo}
                         autoComplete="current-password"
+                        maxLength={255}
                         disabled={enviando}
                         className="rounded border bg-white p-2"
                         required
                     />
                 </div>
+
+                <a href="/recuperar-contrasena" className="text-sm text-[#124277] underline">
+                    ¿Olvidaste tu contraseña?
+                </a>
 
                 <button
                     type="submit"

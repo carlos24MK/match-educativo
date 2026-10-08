@@ -1,17 +1,14 @@
 <?php
 
-use Illuminate\Routing\Router;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', function () {
-    return view('welcome');
-});
-
 Route::redirect('/', '/registro');
+Route::view('/registro', 'app')->name('registro');
+Route::view('/login', 'app')->name('login');
+Route::view('/recuperar-contrasena', 'app')->name('recuperar-contrasena');
 
+Route::view('/dashboard', 'app')
+    ->middleware(['auth:web', 'auth.session'])->name('dashboard');
 
-Route::view('/registro', 'app');
-
-route::view('/login', 'app');
-
-Route::view('/dashboard', 'app')->middleware('auth:web');
+Route::view('/configuracion/seguridad', 'app')
+    ->middleware(['auth:web', 'auth.session'])->name('seguridad');

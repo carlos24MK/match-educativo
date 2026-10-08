@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
 import { enviarFormulario } from '../api.js';
+import RecoveryCodes from './RecoveryCodes.jsx';
 
-export default function Dashboard() {
+// Seguridad muestra los códigos dentro del mismo menú que ya teníamos.
+export default function Dashboard({ seguridad = false }) {
     const [usuario, setUsuario] = useState(null);
     const [cargando, setCargando] = useState(true);
     const [mensaje, setMensaje] = useState('');
@@ -14,6 +16,7 @@ export default function Dashboard() {
             try {
                 const respuesta = await fetch('/api/user', {
                     credentials: 'same-origin',
+                    cache: 'no-store',
                     headers: { Accept: 'application/json' },
                     signal: controlador.signal,
                 });
@@ -75,15 +78,30 @@ export default function Dashboard() {
     return (
         <div className="min-h-screen bg-[#F2F4F7] md:flex">
             <aside className="bg-[#124277] p-6 text-white md:w-64">
-                <p className="text-xl font-bold">Match Educativo</p>
+                <div className="rounded-xl bg-[#F7F7F7] p-2">
+                    <img
+                        src="/images/logo-match-educativo.webp"
+                        alt="Match Educativo"
+                        width={1536}
+                        height={1024}
+                        className="mx-auto h-auto w-full max-w-48"
+                    />
+                </div>
 
                 <nav aria-label="Menú principal" className="mt-6">
                     <a
                         href="/dashboard"
-                        aria-current="page"
-                        className="block rounded bg-white/15 p-3"
+                        aria-current={!seguridad ? 'page' : undefined}
+                        className={!seguridad ? 'block rounded bg-white/15 p-3' : 'block rounded p-3'}
                     >
                         Dashboard
+                    </a>
+                    <a
+                        href="/configuracion/seguridad"
+                        aria-current={seguridad ? 'page' : undefined}
+                        className={seguridad ? 'block rounded bg-white/15 p-3' : 'block rounded p-3'}
+                    >
+                        Configuración → Seguridad
                     </a>
                 </nav>
 
@@ -105,12 +123,12 @@ export default function Dashboard() {
                     <ol className="flex gap-2">
                         <li>Área privada</li>
                         <li aria-hidden="true">/</li>
-                        <li aria-current="page">Dashboard</li>
+                        <li aria-current="page">{seguridad ? 'Seguridad' : 'Dashboard'}</li>
                     </ol>
                 </nav>
 
                 <h1 className="text-3xl font-bold text-[#124277]">
-                    Dashboard
+                    {seguridad ? 'Seguridad' : 'Dashboard'}
                 </h1>
 
                 {cargando && (
@@ -119,7 +137,7 @@ export default function Dashboard() {
                     </p>
                 )}
 
-                {usuario && (
+                {usuario && !seguridad && (
                     <section className="mt-6 rounded-2xl bg-white p-6 shadow-sm">
                         <h2 className="text-xl font-semibold">
                             Hola, {usuario.name}
@@ -134,6 +152,8 @@ export default function Dashboard() {
                         </p>
                     </section>
                 )}
+
+                {usuario && seguridad && <RecoveryCodes />}
 
                 <p role="status" className="mt-4 text-[#555555]">
                     {mensaje}

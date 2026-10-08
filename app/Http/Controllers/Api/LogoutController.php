@@ -12,15 +12,15 @@ class LogoutController extends Controller
     public function logout(Request $request): JsonResponse
     {
         Auth::guard('web')->logout();
+        Auth::shouldUse('web');
 
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
         return response()->json([
-       'success'=> true,
-       'message' => 'session iniciada correctamente'
+            'success' => true,
+            'message' => 'Sesión cerrada correctamente',
 
         ]);
     }
-    
 }

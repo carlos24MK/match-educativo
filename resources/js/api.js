@@ -1,6 +1,8 @@
 export async function enviarFormulario(url, datos) {
+
     const preparacion = await fetch('/sanctum/csrf-cookie', {
         credentials: 'same-origin',
+        cache: 'no-store',
         headers: { Accept: 'application/json' },
     });
 
@@ -20,6 +22,7 @@ export async function enviarFormulario(url, datos) {
     const token = decodeURIComponent(cookie.slice('XSRF-TOKEN='.length));
 
     return fetch(url, {
+        
         method: 'POST',
         credentials: 'same-origin',
         headers: {

@@ -63,7 +63,7 @@ export default function Registro() {
             <form
                 onSubmit={registrar}
                 aria-labelledby="titulo-registro"
-               className="grid w-full max-w-md gap-4 rounded-2xl bg-[#F7F7F7] p-6 shadow-lg sm:p-8"
+                className="grid w-full max-w-md gap-4 rounded-2xl bg-[#F7F7F7] p-6 shadow-lg sm:p-8"
             >
 
                 <header className="mb-2 text-center">
@@ -74,6 +74,7 @@ export default function Registro() {
                         height={1024}
                         className="mx-auto h-auto w-full max-w-xs"
                     />
+                    <h1 id="titulo-registro" className="sr-only">Crear cuenta</h1>
                 </header>
 
 
@@ -89,6 +90,7 @@ export default function Registro() {
                         onChange={cambiarCampo}
                         maxLength={191}
                         autoComplete="name"
+                        disabled={enviando}
                         required
                     />
                 </div>
@@ -105,6 +107,7 @@ export default function Registro() {
                         onChange={cambiarCampo}
                         maxLength={191}
                         autoComplete="email"
+                        disabled={enviando}
                         required
                     />
                 </div>
@@ -120,7 +123,9 @@ export default function Registro() {
                         value={datos.password}
                         onChange={cambiarCampo}
                         minLength={8}
+                        maxLength={255}
                         autoComplete="new-password"
+                        disabled={enviando}
                         required
                     />
                 </div>
@@ -138,7 +143,9 @@ export default function Registro() {
                         value={datos.password_confirmation}
                         onChange={cambiarCampo}
                         minLength={8}
+                        maxLength={255}
                         autoComplete="new-password"
+                        disabled={enviando}
                         required
                     />
                 </div>
@@ -146,18 +153,18 @@ export default function Registro() {
                 <button
                     type="submit"
                     disabled={enviando}
-                    className="mt-4 rounded bg-[#124277] p-3 text-white"
+                    className="mt-4 rounded bg-[#124277] p-3 text-white disabled:opacity-60"
                 >
                     {enviando ? 'Guardando...' : 'Registrarme'}
                 </button>
 
                 <p role="status">{mensaje}</p>
                 <p className="text-center text-sm text-[#555555]">
-    ¿Ya tienes una cuenta?{' '}
-    <a href="/login" className="font-semibold text-[#124277] underline">
-        Inicia sesión
-    </a>
-</p>
+                    ¿Ya tienes una cuenta?{' '}
+                    <a href="/login" className="font-semibold text-[#124277] underline">
+                        Inicia sesión
+                    </a>
+                </p>
             </form>
         </main>
     );
