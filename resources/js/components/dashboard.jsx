@@ -1,15 +1,21 @@
 import { useEffect, useState } from 'react';
 import { enviarFormulario } from '../api.js';
 import RecoveryCodes from './RecoveryCodes.jsx';
+import Skeleton from './Skeleton.jsx';
+import Perfil from './Perfil.jsx';
 
-// Seguridad muestra los códigos dentro del mismo menú que ya teníamos.
-export default function Dashboard({ seguridad = false }) {
+
+export default function Dashboard({ seguridad = false, perfil = false }) {
     const [usuario, setUsuario] = useState(null);
-    const [cargando, setCargando] = useState(true);
+    const [cargando, setCargando] = useState(!perfil);
     const [mensaje, setMensaje] = useState('');
     const [cerrando, setCerrando] = useState(false);
+    const titulo = perfil ? 'Mi perfil' : seguridad ? 'Seguridad' : 'Dashboard';
 
     useEffect(() => {
+        // El perfil consulta sus propios datos en /api/perfil.
+        if (perfil) return;
+
         const controlador = new AbortController();
 
         async function cargarUsuario() {
@@ -21,7 +27,6 @@ export default function Dashboard({ seguridad = false }) {
                     signal: controlador.signal,
                 });
 
-                // La sesión venció o ya se cerró.
                 if (respuesta.status === 401) {
                     window.location.replace('/login');
                     return;
@@ -53,7 +58,7 @@ export default function Dashboard({ seguridad = false }) {
 
         // Cancela la petición si el componente deja de mostrarse.
         return () => controlador.abort();
-    }, []);
+    }, [perfil]);
 
     async function cerrarSesion() {
         setCerrando(true);
@@ -91,10 +96,17 @@ export default function Dashboard({ seguridad = false }) {
                 <nav aria-label="Menú principal" className="mt-6">
                     <a
                         href="/dashboard"
-                        aria-current={!seguridad ? 'page' : undefined}
-                        className={!seguridad ? 'block rounded bg-white/15 p-3' : 'block rounded p-3'}
+                        aria-current={!seguridad && !perfil ? 'page' : undefined}
+                        className={!seguridad && !perfil ? 'block rounded bg-white/15 p-3' : 'block rounded p-3'}
                     >
                         Dashboard
+                    </a>
+                    <a
+                        href="/perfil"
+                        aria-current={perfil ? 'page' : undefined}
+                        className={perfil ? 'block rounded bg-white/15 p-3' : 'block rounded p-3'}
+                    >
+                        Mi perfil
                     </a>
                     <a
                         href="/configuracion/seguridad"
@@ -123,18 +135,22 @@ export default function Dashboard({ seguridad = false }) {
                     <ol className="flex gap-2">
                         <li>Área privada</li>
                         <li aria-hidden="true">/</li>
-                        <li aria-current="page">{seguridad ? 'Seguridad' : 'Dashboard'}</li>
+                        <li aria-current="page">{titulo}</li>
                     </ol>
                 </nav>
 
                 <h1 className="text-3xl font-bold text-[#124277]">
-                    {seguridad ? 'Seguridad' : 'Dashboard'}
+                    {titulo}
                 </h1>
 
                 {cargando && (
-                    <p role="status" className="mt-4">
-                        Cargando tu información...
-                    </p>
+                    <section className="skeleton-tarjeta" role="status">
+                        <p className="sr-only">Cargando tu información...</p>
+
+                        <Skeleton className="skeleton-titulo" />
+                        <Skeleton className="skeleton-correo" />
+                        <Skeleton className="skeleton-texto" />
+                    </section>
                 )}
 
                 {usuario && !seguridad && (
@@ -154,6 +170,7 @@ export default function Dashboard({ seguridad = false }) {
                 )}
 
                 {usuario && seguridad && <RecoveryCodes />}
+                {perfil && <Perfil />}
 
                 <p role="status" className="mt-4 text-[#555555]">
                     {mensaje}

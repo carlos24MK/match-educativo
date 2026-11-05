@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\LoginController;
 use App\Http\Controllers\Api\LogoutController;
+use App\Http\Controllers\Api\PerfilController;
 use App\Http\Controllers\Api\RecoveryCodeController;
 use App\Http\Controllers\Api\RegistroController;
 use Illuminate\Http\Request;
@@ -22,6 +23,8 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 
     Route::post('/logout', [LogoutController::class, 'logout']);
+    Route::get('/perfil', [PerfilController::class, 'mostrar']);
+    Route::post('/perfil', [PerfilController::class, 'guardar']);
 
     Route::get('/recovery-codes', [RecoveryCodeController::class, 'estado']);
 

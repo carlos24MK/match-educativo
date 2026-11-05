@@ -5,18 +5,25 @@ import Login from './components/login.jsx';
 import Dashboard from './components/dashboard.jsx';
 import Seguridad from './components/Seguridad.jsx';
 import RecuperarContrasena from './components/RecuperarContrasena.jsx';
+import Inicio from './components/inicio.jsx';
 
 const contenedor = document.getElementById('app');
 let pantalla;
 
 // Selecciona el componente según la dirección abierta.
 switch (window.location.pathname) {
+    case '/':
+        pantalla = <Inicio />;
+        break;
     case '/login':
         pantalla = <Login />;
         break;
 
     case '/dashboard':
         pantalla = <Dashboard />;
+        break;
+    case '/perfil':
+        pantalla = <Dashboard perfil />;
         break;
 
     case '/configuracion/seguridad':
@@ -29,6 +36,7 @@ switch (window.location.pathname) {
 
     default:
         pantalla = <Registro />;
-}
+
+    }
 
 createRoot(contenedor).render(pantalla);

@@ -7,3 +7,103 @@
     --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
         'Segoe UI Symbol', 'Noto Color Emoji';
 }
+/* Apariencia de las figuras mientras llegan los datos. */
+.skeleton {
+    background-color: #e2e8f0;
+    border-radius: 6px;
+    animation: skeleton-pulso 1.4s ease-in-out infinite;
+}
+
+/* Tarjeta que contiene las figuras. */
+.skeleton-tarjeta {
+    margin-top: 24px;
+    padding: 24px;
+    background-color: white;
+    border-radius: 16px;
+}
+
+/* Tamaños de las figuras. */
+.skeleton-titulo {
+    width: 60%;
+    height: 28px;
+}
+
+.skeleton-correo {
+    width: 80%;
+    height: 20px;
+    margin-top: 12px;
+}
+
+.skeleton-texto {
+    width: 70%;
+    height: 20px;
+    margin-top: 24px;
+}
+
+.skeleton-campo-perfil {
+    width: 100%;
+    height: 96px;
+    margin-top: 20px;
+}
+
+.perfil-contenido {
+    max-width: 64rem;
+    container-type: inline-size;
+}
+
+.perfil-resumen {
+    position: relative;
+    overflow: hidden;
+    padding: clamp(1.25rem, 4vw, 1.75rem);
+    border-radius: 1rem;
+    background: linear-gradient(115deg, #102f57, #124277 56%, #126275);
+    box-shadow: 0 6px 18px rgb(18 66 119 / 14%);
+}
+
+.perfil-resumen::before {
+    position: absolute;
+    top: -7rem;
+    right: -4rem;
+    width: 19rem;
+    height: 19rem;
+    border: 1px solid rgb(255 255 255 / 18%);
+    border-radius: 50%;
+    box-shadow: 0 0 0 2rem rgb(255 255 255 / 5%), 0 0 0 4rem rgb(255 255 255 / 4%);
+    content: '';
+    pointer-events: none;
+}
+
+.perfil-habilidades {
+    display: grid;
+    gap: 1.25rem;
+    grid-template-columns: minmax(0, 1fr);
+}
+
+.perfil-skeleton-resumen {
+    min-height: 10.5rem;
+    border-radius: 1rem;
+}
+
+@container (min-width: 40rem) {
+    .perfil-habilidades {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+/* Cambia suavemente la transparencia. */
+@keyframes skeleton-pulso {
+    0%, 100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.4;
+    }
+}
+
+/* Respeta a quienes prefieren evitar las animaciones. */
+@media (prefers-reduced-motion: reduce) {
+    .skeleton {
+        animation: none;
+    }
+}
