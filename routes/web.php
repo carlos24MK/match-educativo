@@ -13,5 +13,14 @@ Route::view('/dashboard', 'app')
 Route::view('/perfil', 'app')
     ->middleware(['auth:web', 'auth.session'])->name('perfil');
 
+Route::view('/buscar-estudiantes', 'app')
+    ->middleware(['auth:web', 'auth.session'])->name('buscar-estudiantes');
+
+Route::middleware(['auth:web', 'auth.session'])->group(function () {
+    Route::view('/matches', 'app')->name('matches');
+    Route::view('/mensajes', 'app')->name('mensajes');
+    Route::view('/notificaciones', 'app')->name('notificaciones');
+});
+
 Route::view('/configuracion/seguridad', 'app')
     ->middleware(['auth:web', 'auth.session'])->name('seguridad');

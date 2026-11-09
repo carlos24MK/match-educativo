@@ -25,19 +25,21 @@ class PerfilTest extends TestCase
         $this->actingAs($usuario, 'web');
 
         $this->getJson('/api/perfil')->assertOk()->assertExactJson([
-            'presentacion' => '', 'ensena' => [], 'aprende' => [],
+            'presentacion' => '', 'ensena' => [], 'aprende' => [], 'visible_en_busqueda' => false,
         ]);
 
         $datos = [
             'presentacion' => 'Busco compañeros para estudiar.',
             'ensena' => ['Matemáticas'],
             'aprende' => ['JavaScript'],
+            'visible_en_busqueda' => true,
         ];
         $this->postJson('/api/perfil', $datos + ['user_id' => $otro->user_id])
             ->assertOk()->assertExactJson($datos);
         $this->getJson('/api/perfil')->assertOk()->assertExactJson($datos);
 
         $datos['ensena'] = [];
+        $datos['visible_en_busqueda'] = false;
         $this->postJson('/api/perfil', $datos)->assertOk()->assertExactJson($datos);
 
         $this->assertDatabaseCount('perfiles', 2);

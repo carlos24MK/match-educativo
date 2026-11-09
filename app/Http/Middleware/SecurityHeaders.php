@@ -42,7 +42,7 @@ class SecurityHeaders
             $respuesta->headers->set('Strict-Transport-Security', 'max-age=31536000');
         }
 
-        if ($request->is('api/*', 'login', 'registro', 'dashboard', 'configuracion/*', 'recuperar-contrasena')) {
+        if ($request->is('api/*', 'login', 'registro', 'dashboard', 'perfil', 'buscar-estudiantes', 'matches', 'mensajes', 'notificaciones', 'configuracion/*', 'recuperar-contrasena')) {
             $respuesta->headers->set('Cache-Control', 'no-store, private');
         }
 

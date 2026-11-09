@@ -26,6 +26,22 @@ switch (window.location.pathname) {
         pantalla = <Dashboard perfil />;
         break;
 
+    case '/buscar-estudiantes':
+        pantalla = <Dashboard buscar />;
+        break;
+
+    case '/matches':
+        pantalla = <Dashboard seccion="matches" />;
+        break;
+
+    case '/mensajes':
+        pantalla = <Dashboard seccion="mensajes" />;
+        break;
+
+    case '/notificaciones':
+        pantalla = <Dashboard seccion="notificaciones" />;
+        break;
+
     case '/configuracion/seguridad':
         pantalla = <Seguridad />;
         break;

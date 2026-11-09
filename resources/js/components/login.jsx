@@ -3,7 +3,11 @@ import { enviarFormulario } from "../api.js";
 
 export default function Login() {
     const [datos, setDatos] = useState({ email: '', password: '' });
-    const [mensaje, setMensaje] = useState('');
+    const [mensaje, setMensaje] = useState(() => (
+        new URLSearchParams(window.location.search).get('contrasena') === 'actualizada'
+            ? 'Contraseña actualizada. Inicia sesión con la nueva contraseña.'
+            : ''
+    ));
     const [enviando, setEnviando] = useState(false);
 
     function cambiarCampo(evento) {

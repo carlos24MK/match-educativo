@@ -275,6 +275,21 @@ export default function Perfil() {
                         <CampoHabilidades nombre="aprende" titulo="Quiero aprender" descripcion="Temas en los que quieres encontrar apoyo."
                             ejemplo="Ej. Programación" habilidades={datos.aprende} cambiar={valor => actualizar('aprende', valor)} />
                     </div>
+
+                    <section className={claseTarjeta} aria-labelledby="visibilidad-perfil-titulo">
+                        <h2 id="visibilidad-perfil-titulo" className="font-bold text-[#124277]">Visibilidad del perfil</h2>
+                        <label htmlFor="visible-en-busqueda" className="mt-3 flex items-start gap-3 text-sm font-semibold text-slate-800">
+                            <input id="visible-en-busqueda" name="visible_en_busqueda" type="checkbox"
+                                checked={datos.visible_en_busqueda === true}
+                                onChange={evento => actualizar('visible_en_busqueda', evento.target.checked)}
+                                aria-describedby="visibilidad-perfil-ayuda"
+                                className="mt-0.5 size-4 shrink-0 accent-[#124277] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#124277]" />
+                            Aparecer en Buscar estudiantes
+                        </label>
+                        <p id="visibilidad-perfil-ayuda" className="mt-2 text-sm text-slate-600">
+                            Si activas esta opción y guardas, otros usuarios con sesión iniciada podrán ver tu nombre, tu presentación y tus habilidades. Tu correo no se muestra.
+                        </p>
+                    </section>
                 </fieldset>
 
                 {error && <p role="alert" className="mt-4 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-800">{error}</p>}
