@@ -49,8 +49,9 @@ export default function CambiarContrasena() {
     }
 
     return (
-        <section aria-labelledby="titulo-cambiar-contrasena" className="mt-6 max-w-2xl rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-            <h2 id="titulo-cambiar-contrasena" className="text-xl font-bold text-[#124277]">Cambiar contraseña</h2>
+        <section aria-labelledby="titulo-cambiar-contrasena" className="tarjeta-cuenta">
+            <p className="mb-2 inline-flex rounded-full bg-[#e7f0ff] px-2.5 py-1 text-xs font-semibold text-[#244b82]">Acceso a tu cuenta</p>
+            <h2 id="titulo-cambiar-contrasena" className="text-xl font-bold tracking-tight text-[#10233d]">Cambiar contraseña</h2>
             <p className="mt-2 text-sm text-slate-600">
                 Usa al menos ocho caracteres. Al guardar, tendrás que iniciar sesión con tu nueva contraseña.
             </p>
@@ -70,11 +71,11 @@ export default function CambiarContrasena() {
                                 minLength={minLength}
                                 maxLength={255}
                                 required
-                                className="w-full rounded-xl border border-slate-300 bg-slate-50 p-2.5 focus-visible:outline-2 focus-visible:outline-cyan-700"
+                                className="w-full rounded-xl border border-[#ccdae6] bg-[#f5f8fb] p-2.5 focus-visible:outline-2 focus-visible:outline-[#0b766f]"
                             />
                         </div>
                     ))}
-                    <button type="submit" className="justify-self-start rounded-xl bg-[#124277] px-5 py-2.5 font-semibold text-white disabled:opacity-60">
+                    <button type="submit" className="justify-self-start rounded-xl bg-[#123659] px-5 py-2.5 font-semibold text-white hover:bg-[#0b766f] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#123659] disabled:opacity-60">
                         {guardando ? 'Guardando…' : 'Actualizar contraseña'}
                     </button>
                 </fieldset>

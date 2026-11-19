@@ -6,6 +6,7 @@ use App\Models\MatchEducativo;
 use App\Models\Mensaje;
 use App\Models\User;
 use App\Notifications\ActividadMatch;
+use App\Notifications\TiempoReal;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Auth;
 use Tests\TestCase;
@@ -42,6 +43,8 @@ class MensajesNotificacionesTest extends TestCase
         $match = MatchEducativo::factory()->create(['estado' => 'aceptado']);
         $url = '/api/matches/'.$match->id.'/mensajes';
         $contenido = 'Mi horario privado es el martes.';
+        $this->mock(TiempoReal::class)
+            ->shouldReceive('publicar')->once()->with($match->destinatario_id, 'actividad', ['match_id' => $match->id]);
 
         $this->actingAs($match->solicitante, 'web')
             ->postJson($url, ['contenido' => '   '])
@@ -87,6 +90,54 @@ class MensajesNotificacionesTest extends TestCase
             ->assertJsonPath('hay_anteriores', false)
             ->assertJsonPath('data.0.id', $mensajes[0]->id)
             ->assertJsonPath('data.1.id', $mensajes[1]->id);
+        $this->getJson($url.'?despues='.$mensajes[40]->id)
+            ->assertOk()->assertJsonCount(1, 'data')->assertJsonPath('data.0.id', $mensajes[41]->id);
+        $this->getJson($url.'?despues=0&antes='.$mensajes[2]->id)
+            ->assertUnprocessable()->assertJsonValidationErrors('despues');
+    }
+
+    public function test_typing_is_visible_only_to_the_other_participant_and_expires(): void
+    {
+        $match = MatchEducativo::factory()->create(['estado' => 'aceptado']);
+        $url = '/api/matches/'.$match->id.'/mensajes';
+        $this->mock(TiempoReal::class)
+            ->shouldReceive('publicar')->twice()->with($match->destinatario_id, 'escritura', ['match_id' => $match->id]);
+
+        $this->postJson($url.'/escritura', ['escribiendo' => true])->assertUnauthorized();
+        $this->actingAs(User::factory()->create(), 'web')
+            ->postJson($url.'/escritura', ['escribiendo' => true])->assertNotFound();
+
+        Auth::forgetGuards();
+        $this->actingAs($match->solicitante, 'web')
+            ->postJson($url.'/escritura', ['escribiendo' => true])->assertOk();
+        $this->getJson($url.'?despues=0')->assertOk()->assertJsonPath('escribiendo', false);
+
+        Auth::forgetGuards();
+        $this->actingAs($match->destinatario, 'web')
+            ->getJson($url.'?despues=0')->assertJsonPath('escribiendo', true);
+        $this->travel(7)->seconds();
+        $this->getJson($url.'?despues=0')->assertJsonPath('escribiendo', false);
+
+        Auth::forgetGuards();
+        $this->actingAs($match->solicitante, 'web')
+            ->postJson($url.'/escritura', ['escribiendo' => false])->assertOk();
+    }
+
+    public function test_pusher_channel_authorization_is_private_and_does_not_expose_the_secret(): void
+    {
+        config(['services.pusher' => [
+            'key' => 'test-key', 'secret' => 'test-secret', 'app_id' => '123', 'cluster' => 'us2',
+        ]]);
+        $usuario = User::factory()->create();
+        $canal = 'private-user.'.$usuario->id;
+        $socket = '123.456';
+
+        $this->actingAs($usuario, 'web')->getJson('/api/tiempo-real/config')
+            ->assertOk()->assertJsonPath('user_id', $usuario->id)->assertDontSee('test-secret');
+        $this->postJson('/api/tiempo-real/auth', ['socket_id' => $socket, 'channel_name' => $canal.'9'])
+            ->assertForbidden();
+        $this->postJson('/api/tiempo-real/auth', ['socket_id' => $socket, 'channel_name' => $canal])
+            ->assertOk()->assertJsonPath('auth', 'test-key:'.hash_hmac('sha256', $socket.':'.$canal, 'test-secret'));
     }
 
     public function test_notifications_can_only_be_marked_by_their_owner(): void

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\MatchEducativo;
 use App\Models\Perfil;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Query\Builder as QueryBuilder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -17,6 +18,8 @@ class EstudianteController extends Controller
             'habilidad' => ['nullable', 'string', 'max:60'],
             'buscar' => ['nullable', 'string', 'max:60'],
             'tipo' => ['sometimes', 'in:ensena,aprende,todos'],
+            'horario_comun' => ['sometimes', 'boolean'],
+            'habilidades_complementarias' => ['sometimes', 'boolean'],
             'page' => ['sometimes', 'integer', 'min:1', 'max:100000'],
         ]);
 
@@ -27,10 +30,15 @@ class EstudianteController extends Controller
             ->where('perfiles.user_id', '!=', $usuarioId)
             ->select([
                 'perfiles.user_id as id',
+                'perfiles.user_id',
                 'users.name as nombre',
                 'perfiles.presentacion',
                 'perfiles.ensena',
                 'perfiles.aprende',
+                'perfiles.programa',
+                'perfiles.semestre',
+                'perfiles.preferencias_estudio',
+                'perfiles.foto_path',
             ])
             ->orderBy('users.name')
             ->orderBy('perfiles.user_id');
@@ -45,6 +53,22 @@ class EstudianteController extends Controller
             });
         }
 
+        if ($request->boolean('horario_comun')) {
+            $consulta->whereExists(function (QueryBuilder $horarios) use ($usuarioId): void {
+                $horarios->selectRaw('1')
+                    ->from('horarios_disponibles as candidato')
+                    ->join('horarios_disponibles as propio', 'propio.dia', '=', 'candidato.dia')
+                    ->whereColumn('candidato.user_id', 'perfiles.user_id')
+                    ->where('propio.user_id', $usuarioId)
+                    ->whereColumn('candidato.inicio', '<', 'propio.fin')
+                    ->whereColumn('propio.inicio', '<', 'candidato.fin');
+            });
+        }
+
+        if ($request->boolean('habilidades_complementarias')) {
+            $this->filtrarComplementarias($consulta, Perfil::where('user_id', $usuarioId)->first());
+        }
+
         $pagina = $consulta->paginate(9);
         $parejas = $pagina->getCollection()->map(
             fn (Perfil $perfil): string => MatchEducativo::clavePareja($usuarioId, (int) $perfil->id),
@@ -54,7 +78,8 @@ class EstudianteController extends Controller
         $resultados = $pagina->getCollection()->map(function (Perfil $perfil) use ($matches, $usuarioId): array {
             $match = $matches->get(MatchEducativo::clavePareja($usuarioId, (int) $perfil->id));
 
-            return $perfil->only(['id', 'nombre', 'presentacion', 'ensena', 'aprende']) + [
+            return $perfil->only(['id', 'nombre', 'presentacion', 'ensena', 'aprende', 'programa', 'semestre', 'preferencias_estudio']) + [
+                'foto_url' => $perfil->fotoUrl(),
                 'match' => $match ? [
                     'id' => $match->id,
                     'estado' => $match->estado,
@@ -69,6 +94,54 @@ class EstudianteController extends Controller
             'last_page' => $pagina->lastPage(),
             'total' => $pagina->total(),
         ]);
+    }
+
+    /** @param Builder<Perfil> $consulta */
+    private function filtrarComplementarias(Builder $consulta, ?Perfil $perfil): void
+    {
+        $temas = [
+            'perfiles.ensena' => $perfil?->aprende ?? [],
+            'perfiles.aprende' => $perfil?->ensena ?? [],
+        ];
+
+        if ($temas['perfiles.ensena'] === [] && $temas['perfiles.aprende'] === []) {
+            $consulta->whereRaw('1 = 0');
+
+            return;
+        }
+
+        $conexion = $consulta->getQuery()->getConnection();
+        $esSqlite = $conexion->getDriverName() === 'sqlite';
+        if ($esSqlite) {
+            $conexion->getReadPdo()->sqliteCreateFunction(
+                'normalizar_habilidad',
+                static fn (string $valor): string => mb_strtolower(trim($valor), 'UTF-8'),
+                1,
+            );
+        }
+        $valorNormalizado = $esSqlite ? 'normalizar_habilidad(habilidades.value)' : 'LOWER(TRIM(habilidades.value)) COLLATE utf8mb4_bin';
+
+        $consulta->where(function (Builder $coincidencias) use ($temas, $esSqlite, $valorNormalizado): void {
+            foreach ($temas as $columna => $habilidades) {
+                if ($habilidades === []) {
+                    continue;
+                }
+                $valores = array_map(static fn (string $tema): string => mb_strtolower(trim($tema), 'UTF-8'), $habilidades);
+                $marcas = implode(', ', array_fill(0, count($valores), '?'));
+                $tabla = $this->tablaDeHabilidades($columna, $esSqlite);
+                $coincidencias->orWhereRaw(
+                    "EXISTS (SELECT 1 FROM {$tabla} AS habilidades WHERE {$valorNormalizado} IN ({$marcas}))",
+                    $valores,
+                );
+            }
+        });
+    }
+
+    private function tablaDeHabilidades(string $columna, bool $esSqlite): string
+    {
+        return $esSqlite
+            ? "json_each({$columna})"
+            : "JSON_TABLE({$columna}, '$[*]' COLUMNS(value VARCHAR(60) CHARACTER SET utf8mb4 PATH '$'))";
     }
 
     /** @param Builder<Perfil> $consulta */
@@ -104,9 +177,7 @@ class EstudianteController extends Controller
             $coincidencias->whereRaw(sprintf($contiene, 'users.name'), [$termino]);
 
             foreach ($columnas as $columna) {
-                $habilidades = $esSqlite
-                    ? "json_each({$columna})"
-                    : "JSON_TABLE({$columna}, '$[*]' COLUMNS(value VARCHAR(60) CHARACTER SET utf8mb4 PATH '$'))";
+                $habilidades = $this->tablaDeHabilidades($columna, $esSqlite);
                 $habilidadCoincide = sprintf($contiene, 'habilidades.value');
 
                 $coincidencias->orWhereRaw(

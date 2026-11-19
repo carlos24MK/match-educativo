@@ -69,7 +69,8 @@ class MatchesTest extends TestCase
             ->assertJsonPath('data.estado', 'aceptado')->assertJsonPath('data.direccion', 'recibida');
         $this->postJson($url, $datos)->assertConflict();
         $this->getJson('/api/matches?tipo=conexiones')->assertOk()
-            ->assertJsonPath('data.0.id', $solicitud->id);
+            ->assertJsonPath('data.0.id', $solicitud->id)
+            ->assertJsonPath('data.0.estudiante.horarios', []);
         $this->getJson('/api/matches?tipo=recibidas')->assertOk()->assertJsonPath('total', 0);
 
         $aviso = $solicitud->solicitante->notifications()->sole();
@@ -92,6 +93,31 @@ class MatchesTest extends TestCase
             ->assertOk()->assertJsonPath('data.estado', 'cancelado');
         $this->getJson('/api/matches?tipo=historial')->assertOk()->assertJsonPath('data.0.id', $otra->id);
         $this->getJson('/api/matches?tipo=invalido')->assertUnprocessable()->assertJsonValidationErrors('tipo');
+    }
+
+    public function test_only_accepted_matches_can_see_each_others_availability(): void
+    {
+        $solicitud = MatchEducativo::factory()->create();
+        $lunes = ['dia' => 1, 'inicio' => '09:00', 'fin' => '11:00'];
+        $miercoles = ['dia' => 3, 'inicio' => '15:00', 'fin' => '17:00'];
+        $jueves = ['dia' => 4, 'inicio' => '13:00', 'fin' => '14:00'];
+
+        $this->como($solicitud->solicitante)->postJson('/api/horarios', ['horarios' => [$jueves]])->assertOk();
+        $this->getJson('/api/matches?tipo=enviadas')->assertOk()
+            ->assertJsonMissingPath('data.0.estudiante.horarios');
+
+        $this->como($solicitud->destinatario)->postJson('/api/horarios', ['horarios' => [$miercoles, $lunes]])->assertOk();
+        $this->getJson('/api/matches?tipo=recibidas')->assertOk()
+            ->assertJsonMissingPath('data.0.estudiante.horarios');
+        $this->getJson('/api/matches?tipo=conexiones')->assertOk()->assertJsonCount(0, 'data');
+
+        $this->postJson("/api/matches/{$solicitud->id}/responder", ['accion' => 'aceptar'])->assertOk();
+        $this->getJson('/api/matches?tipo=conexiones')->assertOk()
+            ->assertJsonPath('data.0.estudiante.horarios', [$jueves]);
+        $this->como($solicitud->solicitante)->getJson('/api/matches?tipo=conexiones')->assertOk()
+            ->assertJsonPath('data.0.estudiante.horarios', [$lunes, $miercoles]);
+        $this->como(User::factory()->create())->getJson('/api/matches?tipo=conexiones')->assertOk()
+            ->assertJsonCount(0, 'data');
     }
 
     private function como(User $usuario): static

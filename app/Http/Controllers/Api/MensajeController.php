@@ -7,9 +7,11 @@ use App\Models\MatchEducativo;
 use App\Models\Mensaje;
 use App\Models\User;
 use App\Notifications\ActividadMatch;
+use App\Notifications\TiempoReal;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 class MensajeController extends Controller
@@ -22,9 +24,21 @@ class MensajeController extends Controller
         $conexion = $this->buscarMatchAceptado($match, $usuarioId);
         $filtros = $request->validate([
             'antes' => ['sometimes', 'required', 'integer', 'min:1'],
+            'despues' => ['sometimes', 'required', 'integer', 'min:0', 'prohibits:antes'],
         ]);
 
         $consulta = Mensaje::query()->where('match_id', $conexion->id);
+        $otroId = $this->otroEstudianteId($conexion, $usuarioId);
+        $escribiendo = Cache::has($this->claveEscritura($match, $otroId));
+        if (isset($filtros['despues'])) {
+            $mensajes = $consulta->where('id', '>', $filtros['despues'])->orderBy('id')
+                ->limit(self::MensajesPorPagina)->get();
+
+            return response()->json([
+                'data' => $mensajes->map(fn (Mensaje $mensaje): array => $this->serializar($mensaje, $usuarioId)),
+                'escribiendo' => $escribiendo,
+            ]);
+        }
         if (isset($filtros['antes'])) {
             $consulta->where('id', '<', $filtros['antes']);
         }
@@ -38,7 +52,26 @@ class MensajeController extends Controller
                 ->map(fn (Mensaje $mensaje): array => $this->serializar($mensaje, $usuarioId)),
             'hay_anteriores' => $mensajes->count() > self::MensajesPorPagina,
             'estudiante' => ['id' => $otro->id, 'nombre' => $otro->name],
+            'escribiendo' => $escribiendo,
         ]);
+    }
+
+    public function escritura(Request $request, int $match, TiempoReal $tiempoReal): JsonResponse
+    {
+        $usuarioId = (int) $request->user()->id;
+        $conexion = $this->buscarMatchAceptado($match, $usuarioId);
+        $datos = $request->validate(['escribiendo' => ['required', 'boolean']]);
+        $clave = $this->claveEscritura($match, $usuarioId);
+
+        if ($datos['escribiendo']) {
+            Cache::put($clave, true, 6);
+        } else {
+            Cache::forget($clave);
+        }
+
+        $tiempoReal->publicar($this->otroEstudianteId($conexion, $usuarioId), 'escritura', ['match_id' => $match]);
+
+        return response()->json(['ok' => true]);
     }
 
     public function store(Request $request, int $match): JsonResponse
@@ -86,11 +119,19 @@ class MensajeController extends Controller
 
     private function otroEstudiante(MatchEducativo $conexion, int $usuarioId): User
     {
-        $otroId = (int) $conexion->solicitante_id === $usuarioId
-            ? $conexion->destinatario_id
-            : $conexion->solicitante_id;
+        return User::query()->findOrFail($this->otroEstudianteId($conexion, $usuarioId), ['id', 'name']);
+    }
 
-        return User::query()->findOrFail($otroId, ['id', 'name']);
+    private function otroEstudianteId(MatchEducativo $conexion, int $usuarioId): int
+    {
+        return (int) $conexion->solicitante_id === $usuarioId
+            ? (int) $conexion->destinatario_id
+            : (int) $conexion->solicitante_id;
+    }
+
+    private function claveEscritura(int $match, int $usuarioId): string
+    {
+        return "escritura:{$match}:{$usuarioId}";
     }
 
     /** @return array{id: int, contenido: string, es_mio: bool, creado_en: string} */

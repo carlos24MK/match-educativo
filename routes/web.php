@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\EsAdministrador;
 use Illuminate\Support\Facades\Route;
 
 Route::view('/', 'app')->name('inicio');
@@ -20,6 +21,9 @@ Route::middleware(['auth:web', 'auth.session'])->group(function () {
     Route::view('/matches', 'app')->name('matches');
     Route::view('/mensajes', 'app')->name('mensajes');
     Route::view('/notificaciones', 'app')->name('notificaciones');
+    Route::view('/horarios', 'app')->name('horarios');
+    Route::view('/reportes', 'app')->name('reportes');
+    Route::view('/administracion', 'app')->middleware(EsAdministrador::class)->name('administracion');
 });
 
 Route::view('/configuracion/seguridad', 'app')

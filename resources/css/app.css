@@ -7,6 +7,66 @@
     --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
         'Segoe UI Symbol', 'Noto Color Emoji';
 }
+
+.area-privada {
+    color: #10233d;
+    background: radial-gradient(ellipse at 100% 0, #e4f4f6, transparent 38rem), #eef4f8;
+}
+
+.marca-emblema {
+    background: radial-gradient(circle, #dbf5f2 0, transparent 72%);
+}
+
+.marca-emblema-oscuro {
+    background: radial-gradient(circle, #d3f9f1d9 0, #8de6ee50 46%, transparent 72%);
+}
+
+.menu-privado {
+    background: radial-gradient(ellipse at 15% 0, #214d71, transparent 28rem), #10233d;
+    border-color: #305575;
+}
+
+.enlace-menu-privado {
+    position: relative;
+    border: 1px solid transparent;
+    color: #d9e8f4;
+    transition: background-color 150ms, color 150ms;
+}
+
+.enlace-menu-privado:hover {
+    background-color: #ffffff0e;
+    color: white;
+}
+
+.enlace-menu-privado[aria-current='page'] {
+    border-color: #9bead642;
+    background: #9bead61c;
+    color: #e1fcf6;
+}
+
+.enlace-menu-privado[aria-current='page']::before {
+    position: absolute;
+    inset: 0.6rem auto 0.6rem 0;
+    width: 3px;
+    border-radius: 3px;
+    background-color: #82e1ca;
+    content: '';
+}
+
+.tarjeta-cuenta {
+    min-width: 0;
+    padding: clamp(1rem, 3vw, 1.5rem);
+    border: 1px solid #d9e5ee;
+    border-radius: 1.25rem;
+    background: #fff;
+    box-shadow: 0 12px 24px rgb(16 35 61 / 5%);
+}
+
+.perfil-privacidad {
+    border-color: #cbe8e3;
+    background: linear-gradient(145deg, #eaf8f5, #fff 82%);
+}
+
 /* Apariencia de las figuras mientras llegan los datos. */
 .skeleton {
     background-color: #e2e8f0;
@@ -54,25 +114,26 @@
 .perfil-resumen {
     position: relative;
     overflow: hidden;
-    padding: clamp(1.25rem, 4vw, 1.75rem);
-    border-radius: 1rem;
-    background: linear-gradient(115deg, #102f57, #124277 56%, #126275);
-    box-shadow: 0 6px 18px rgb(18 66 119 / 14%);
+    padding: clamp(1.25rem, 4vw, 2rem);
+    border: 1px solid #d4f7ff2b;
+    border-radius: 1.35rem;
+    background: radial-gradient(ellipse at 95% 125%, #148476, transparent 55%),
+        linear-gradient(115deg, #10233d, #123659 58%, #11696c);
+    box-shadow: 0 14px 32px rgb(18 54 89 / 16%);
 }
 
 .perfil-resumen::before {
     position: absolute;
-    top: -7rem;
-    right: -4rem;
-    width: 19rem;
-    height: 19rem;
-    border: 1px solid rgb(255 255 255 / 18%);
-    border-radius: 50%;
-    box-shadow: 0 0 0 2rem rgb(255 255 255 / 5%), 0 0 0 4rem rgb(255 255 255 / 4%);
+    inset: 0 0 0 36%;
+    background-image: radial-gradient(circle, #defff663 1px, transparent 1.5px);
+    background-size: 20px 20px;
+    mask-image: linear-gradient(to right, transparent, black);
+    opacity: 0.5;
     content: '';
     pointer-events: none;
 }
 
+.perfil-datos,
 .perfil-habilidades {
     display: grid;
     gap: 1.25rem;
@@ -87,6 +148,16 @@
 @container (min-width: 40rem) {
     .perfil-habilidades {
         grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@container (min-width: 44rem) {
+    .perfil-datos {
+        grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+    }
+
+    .perfil-skeleton-resumen {
+        min-height: 7rem;
     }
 }
 
@@ -105,5 +176,9 @@
 @media (prefers-reduced-motion: reduce) {
     .skeleton {
         animation: none;
+    }
+
+    .enlace-menu-privado {
+        transition: none;
     }
 }

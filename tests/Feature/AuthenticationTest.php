@@ -72,9 +72,24 @@ class AuthenticationTest extends TestCase
     {
         $respuesta = $this->get('/recuperar-contrasena')->assertOk()
             ->assertHeader('X-Content-Type-Options', 'nosniff')
-            ->assertHeader('X-Frame-Options', 'DENY');
+            ->assertHeader('X-Frame-Options', 'DENY')
+            ->assertHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
         $this->assertStringContainsString("frame-ancestors 'none'", $respuesta->headers->get('Content-Security-Policy'));
         $this->assertStringContainsString('no-store', $respuesta->headers->get('Cache-Control'));
+    }
+
+    public function test_security_policy_allows_the_configured_pusher_cluster(): void
+    {
+        config(['services.pusher.key' => 'test-key', 'services.pusher.cluster' => 'us2']);
+
+        $usuario = User::factory()->create();
+        $respuesta = $this->actingAs($usuario)->get('/mensajes')->assertOk()
+            ->assertHeader('Permissions-Policy', 'camera=(self), microphone=(self), geolocation=()');
+
+        $this->assertStringContainsString(
+            "connect-src 'self' wss://ws-us2.pusher.com https://sockjs-us2.pusher.com",
+            $respuesta->headers->get('Content-Security-Policy'),
+        );
     }
 
     public function test_stateful_post_requires_csrf_outside_the_testing_bypass(): void

@@ -15,9 +15,18 @@ class SecurityHeaders
         Vite::useCspNonce();
         $respuesta = $next($request);
         $desarrollo = $this->origenVite();
-        $conexion = $desarrollo
-            ? $desarrollo.' '.preg_replace('/^http/', 'ws', $desarrollo)
-            : '';
+        $conexiones = ["'self'"];
+
+        if ($desarrollo !== '') {
+            $conexiones[] = $desarrollo;
+            $conexiones[] = preg_replace('/^http/', 'ws', $desarrollo);
+        }
+
+        $cluster = config('services.pusher.cluster');
+        if (config('services.pusher.key') && is_string($cluster) && preg_match('/\A[a-z0-9]+\z/', $cluster)) {
+            $conexiones[] = "wss://ws-{$cluster}.pusher.com";
+            $conexiones[] = "https://sockjs-{$cluster}.pusher.com";
+        }
 
         $politica = [
             "default-src 'self'",
@@ -28,21 +37,26 @@ class SecurityHeaders
             "script-src 'self' 'nonce-".Vite::cspNonce()."' ".$desarrollo,
             "style-src 'self' 'unsafe-inline' ".$desarrollo,
             "img-src 'self' data: blob:",
+            "media-src 'self' blob:",
             "font-src 'self' data:",
-            "connect-src 'self' ".$conexion,
+            'connect-src '.implode(' ', $conexiones),
         ];
 
         $respuesta->headers->set('Content-Security-Policy', implode('; ', $politica));
         $respuesta->headers->set('X-Content-Type-Options', 'nosniff');
         $respuesta->headers->set('X-Frame-Options', 'DENY');
         $respuesta->headers->set('Referrer-Policy', 'same-origin');
-        $respuesta->headers->set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+        $permisoMedios = $request->routeIs(
+            'dashboard', 'perfil', 'buscar-estudiantes', 'matches', 'mensajes',
+            'notificaciones', 'horarios', 'reportes', 'seguridad', 'administracion'
+        ) ? '(self)' : '()';
+        $respuesta->headers->set('Permissions-Policy', "camera={$permisoMedios}, microphone={$permisoMedios}, geolocation=()");
 
         if ($request->isSecure()) {
             $respuesta->headers->set('Strict-Transport-Security', 'max-age=31536000');
         }
 
-        if ($request->is('api/*', 'login', 'registro', 'dashboard', 'perfil', 'buscar-estudiantes', 'matches', 'mensajes', 'notificaciones', 'configuracion/*', 'recuperar-contrasena')) {
+        if ($request->is('api/*', 'login', 'registro', 'dashboard', 'perfil', 'buscar-estudiantes', 'matches', 'mensajes', 'notificaciones', 'horarios', 'reportes', 'administracion', 'configuracion/*', 'recuperar-contrasena')) {
             $respuesta->headers->set('Cache-Control', 'no-store, private');
         }
 

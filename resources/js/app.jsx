@@ -42,6 +42,18 @@ switch (window.location.pathname) {
         pantalla = <Dashboard seccion="notificaciones" />;
         break;
 
+    case '/horarios':
+        pantalla = <Dashboard seccion="horarios" />;
+        break;
+
+    case '/reportes':
+        pantalla = <Dashboard seccion="reportes" />;
+        break;
+
+    case '/administracion':
+        pantalla = <Dashboard seccion="administracion" />;
+        break;
+
     case '/configuracion/seguridad':
         pantalla = <Seguridad />;
         break;

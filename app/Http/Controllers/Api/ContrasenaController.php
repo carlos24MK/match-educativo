@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Notifications\AvisoCorreo;
 use App\Rules\CompatiblePassword;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -47,6 +48,8 @@ class ContrasenaController extends Controller
 
             DB::table(config('auth.passwords.users.table', 'password_reset_tokens'))
                 ->where('email', $usuario->email)->delete();
+
+            DB::afterCommit(fn () => AvisoCorreo::enviar($usuario, 'contrasena_cambiada'));
         });
 
         // Cierra también la sesión que acaba de cambiar la contraseña.

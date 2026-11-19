@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Notifications\ActividadMatch;
+use App\Notifications\ReporteAdministrativo;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -24,11 +25,13 @@ class NotificacionController extends Controller
                 'tipo' => $notificacion->data['tipo'],
                 'titulo' => $notificacion->data['titulo'],
                 'descripcion' => $notificacion->data['descripcion'],
-                'match_id' => $notificacion->data['match_id'],
+                'match_id' => $notificacion->data['match_id'] ?? null,
+                'reporte_id' => $notificacion->data['reporte_id'] ?? null,
                 'leida' => $notificacion->read_at !== null,
                 'creada_en' => $notificacion->created_at->toISOString(),
             ]),
             'no_leidas' => $this->contarNoLeidas($usuario),
+            'es_admin' => $usuario->esAdministrador(),
             'current_page' => $pagina->currentPage(),
             'last_page' => $pagina->lastPage(),
             'total' => $pagina->total(),
@@ -54,7 +57,12 @@ class NotificacionController extends Controller
     /** @return MorphMany<DatabaseNotification, User> */
     private function notificaciones(User $usuario): MorphMany
     {
-        return $usuario->notifications()->where('type', ActividadMatch::class);
+        $tipos = [ActividadMatch::class];
+        if ($usuario->esAdministrador()) {
+            $tipos[] = ReporteAdministrativo::class;
+        }
+
+        return $usuario->notifications()->whereIn('type', $tipos);
     }
 
     private function contarNoLeidas(User $usuario): int

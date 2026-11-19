@@ -1,5 +1,4 @@
-export async function enviarFormulario(url, datos) {
-
+async function enviarConCsrf(url, opciones) {
     const preparacion = await fetch('/sanctum/csrf-cookie', {
         credentials: 'same-origin',
         cache: 'no-store',
@@ -22,14 +21,32 @@ export async function enviarFormulario(url, datos) {
     const token = decodeURIComponent(cookie.slice('XSRF-TOKEN='.length));
 
     return fetch(url, {
-        
-        method: 'POST',
+        ...opciones,
         credentials: 'same-origin',
         headers: {
-            'Content-Type': 'application/json',
             Accept: 'application/json',
             'X-XSRF-TOKEN': token,
+            ...opciones.headers,
         },
+    });
+}
+
+export function enviarFormulario(url, datos) {
+    return enviarConCsrf(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(datos),
     });
+}
+
+export function enviarFotoPerfil(archivo) {
+    const formulario = new FormData();
+    formulario.append('foto', archivo);
+
+    // El navegador incluye el límite multipart en Content-Type.
+    return enviarConCsrf('/api/perfil/foto', { method: 'POST', body: formulario });
+}
+
+export function quitarFotoPerfil() {
+    return enviarConCsrf('/api/perfil/foto', { method: 'DELETE' });
 }

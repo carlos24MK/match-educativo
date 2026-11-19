@@ -1,8 +1,10 @@
 import { useState } from "react";
 import { enviarFormulario } from "../api.js";
+import AuthLayout from './AuthLayout.jsx';
 
 export default function Login() {
     const [datos, setDatos] = useState({ email: '', password: '' });
+    const [intentoRealizado, setIntentoRealizado] = useState(false);
     const [mensaje, setMensaje] = useState(() => (
         new URLSearchParams(window.location.search).get('contrasena') === 'actualizada'
             ? 'Contraseña actualizada. Inicia sesión con la nueva contraseña.'
@@ -20,6 +22,7 @@ export default function Login() {
     async function iniciarSesion(evento) {
         evento.preventDefault();
         setEnviando(true);
+        setIntentoRealizado(true);
         setMensaje('Iniciando sesión...');
 
         try {
@@ -51,7 +54,7 @@ export default function Login() {
                 setMensaje('No se pudo iniciar sesión.');
             }
         } catch {
-            setMensaje('No se pudo completar la petición. Revisa la conexión y Laravel.');
+            setMensaje('No se pudo iniciar sesión. Inténtalo de nuevo en unos minutos.');
         } finally {
             setDatos({ ...datos, password: '' });
             setEnviando(false);
@@ -59,27 +62,14 @@ export default function Login() {
     }
 
     return (
-        <main className="flex min-h-screen items-center justify-center bg-[#F2F4F7] px-4 py-8">
+        <AuthLayout tituloId="titulo-login" titulo="Iniciar sesión" categoria="Tu espacio de estudio"
+            descripcion="Vuelve a tus conversaciones, habilidades y conexiones de estudio.">
             <form
                 onSubmit={iniciarSesion}
                 aria-labelledby="titulo-login"
-                className="grid w-full max-w-md gap-4 rounded-2xl bg-[#F7F7F7] p-6 shadow-lg sm:p-8"
+                className="auth-form"
             >
-                <header className="text-center">
-                    <img
-                        src="/images/logo-match-educativo.webp"
-                        alt="Match Educativo: Conecta, comparte y aprende"
-                        width={1536}
-                        height={1024}
-                        className="mx-auto h-auto w-full max-w-xs"
-                    />
-
-                    <h1 id="titulo-login" className="mt-4 text-2xl font-semibold">
-                        Iniciar sesión
-                    </h1>
-                </header>
-
-                <div className="grid gap-1">
+                <div className="auth-field">
                     <label htmlFor="login-email">Correo electrónico</label>
 
                     <input
@@ -91,12 +81,11 @@ export default function Login() {
                         autoComplete="email"
                         maxLength={191}
                         disabled={enviando}
-                        className="rounded border bg-white p-2"
                         required
                     />
                 </div>
 
-                <div className="grid gap-1">
+                <div className="auth-field">
                     <label htmlFor="login-password">Contraseña</label>
 
                     <input
@@ -108,30 +97,29 @@ export default function Login() {
                         autoComplete="current-password"
                         maxLength={255}
                         disabled={enviando}
-                        className="rounded border bg-white p-2"
                         required
                     />
                 </div>
 
-                <a href="/recuperar-contrasena" className="text-sm text-[#124277] underline">
+                <a href="/recuperar-contrasena" className="auth-link justify-self-end text-sm">
                     ¿Olvidaste tu contraseña?
                 </a>
 
                 <button
                     type="submit"
                     disabled={enviando}
-                    className="rounded bg-[#124277] p-3 text-white disabled:opacity-60"
+                    className="auth-button"
                 >
                     {enviando ? 'Entrando...' : 'Iniciar sesión'}
                 </button>
 
-                <p role="status">{mensaje}</p>
-                
+                <p role="status" className={`auth-status empty:sr-only ${intentoRealizado && !enviando ? 'auth-status--error' : ''}`}>{mensaje}</p>
 
-                <a href="/registro" className="text-center text-[#124277] underline">
-                    Crear una cuenta
-                </a>
+                <p className="auth-form-footer">
+                    ¿Aún no tienes cuenta?{' '}
+                    <a href="/registro" className="auth-link">Crear una cuenta</a>
+                </p>
             </form>
-        </main>
+        </AuthLayout>
     );
 }

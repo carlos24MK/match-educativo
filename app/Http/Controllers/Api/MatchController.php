@@ -23,11 +23,12 @@ class MatchController extends Controller
             'page' => ['sometimes', 'integer', 'min:1', 'max:100000'],
         ]);
         $usuarioId = (int) $request->user()->id;
+        $tipo = $filtros['tipo'] ?? 'recibidas';
 
         $consulta = $this->delUsuario($usuarioId)
             ->with(['solicitante:id,name', 'destinatario:id,name']);
 
-        match ($filtros['tipo'] ?? 'recibidas') {
+        match ($tipo) {
             'recibidas' => $consulta->where('destinatario_id', $usuarioId)->where('estado', 'pendiente'),
             'enviadas' => $consulta->where('solicitante_id', $usuarioId)->where('estado', 'pendiente'),
             'conexiones' => $consulta->where('estado', 'aceptado'),
@@ -35,11 +36,31 @@ class MatchController extends Controller
         };
 
         $pagina = $consulta->latest('updated_at')->orderByDesc('id')->paginate(12);
+        $datos = $pagina->getCollection()
+            ->map(fn (MatchEducativo $solicitud): array => $this->presentar($solicitud, $usuarioId));
+
+        if ($tipo === 'conexiones' && $datos->isNotEmpty()) {
+            $horariosPorEstudiante = DB::table('horarios_disponibles')
+                ->whereIn('user_id', $datos->pluck('estudiante.id')->all())
+                ->orderBy('dia')->orderBy('inicio')
+                ->get(['user_id', 'dia', 'inicio', 'fin'])
+                ->groupBy('user_id');
+
+            $datos = $datos->map(function (array $conexion) use ($horariosPorEstudiante): array {
+                $conexion['estudiante']['horarios'] = $horariosPorEstudiante
+                    ->get($conexion['estudiante']['id'], collect())
+                    ->map(fn (object $bloque): array => [
+                        'dia' => (int) $bloque->dia,
+                        'inicio' => $bloque->inicio,
+                        'fin' => $bloque->fin,
+                    ])->all();
+
+                return $conexion;
+            });
+        }
 
         return response()->json([
-            'data' => $pagina->getCollection()
-                ->map(fn (MatchEducativo $solicitud): array => $this->presentar($solicitud, $usuarioId))
-                ->all(),
+            'data' => $datos->all(),
             'current_page' => $pagina->currentPage(),
             'last_page' => $pagina->lastPage(),
             'total' => $pagina->total(),

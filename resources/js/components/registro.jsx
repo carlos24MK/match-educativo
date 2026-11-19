@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { enviarFormulario } from "../api.js";
+import AuthLayout from './AuthLayout.jsx';
+
 const camposIniciales = {
     name: '',
     email: '',
@@ -11,6 +13,7 @@ export default function Registro() {
 
     const [datos, setDatos] = useState(camposIniciales);
     const [mensaje, setMensaje] = useState('');
+    const [registroExitoso, setRegistroExitoso] = useState(false);
     const [enviando, setEnviando] = useState(false);
 
     function cambiarCampo(evento) {
@@ -27,6 +30,7 @@ export default function Registro() {
 
         evento.preventDefault();
         setEnviando(true);
+        setRegistroExitoso(false);
         setMensaje('Guardando...');
 
         try {
@@ -35,6 +39,7 @@ export default function Registro() {
             const resultado = await respuesta.json();
 
             if (respuesta.ok) {
+                setRegistroExitoso(true);
                 setMensaje(resultado.message);
                 setDatos(camposIniciales);
             } else if (respuesta.status === 422) {
@@ -51,7 +56,7 @@ export default function Registro() {
             }
         } catch {
             setMensaje(
-                'No se pudo completar la petición. Revisa Laravel.'
+                'No se pudo completar el registro. Inténtalo de nuevo en unos minutos.'
             );
         } finally {
             setEnviando(false);
@@ -59,30 +64,17 @@ export default function Registro() {
     }
 
     return (
-        <main className="flex min-h-screen items-center justify-center bg-[#F2F4F7] px-4 py-8">
+        <AuthLayout tituloId="titulo-registro" titulo="Crear cuenta" categoria="Únete a la comunidad"
+            descripcion="Crea tu perfil para compartir tus habilidades y encontrar compañeros de estudio.">
             <form
                 onSubmit={registrar}
                 aria-labelledby="titulo-registro"
-                className="grid w-full max-w-md gap-4 rounded-2xl bg-[#F7F7F7] p-6 shadow-lg sm:p-8"
+                className="auth-form"
             >
-
-                <header className="mb-2 text-center">
-                    <img
-                        src="/images/logo-match-educativo.webp"
-                        alt="Match Educativo: Conecta, comparte y aprende"
-                        width={1536}
-                        height={1024}
-                        className="mx-auto h-auto w-full max-w-xs"
-                    />
-                    <h1 id="titulo-registro" className="sr-only">Crear cuenta</h1>
-                </header>
-
-
-                <div className="grid gap-1">
+                <div className="auth-field">
                     <label htmlFor="name">Nombre</label>
 
                     <input
-                        className="rounded border bg-white p-2"
                         id="name"
                         name="name"
                         type="text"
@@ -95,11 +87,10 @@ export default function Registro() {
                     />
                 </div>
 
-                <div className="grid gap-1">
+                <div className="auth-field">
                     <label htmlFor="email">Correo electrónico</label>
 
                     <input
-                        className="rounded border bg-white p-2"
                         id="email"
                         name="email"
                         type="email"
@@ -112,60 +103,58 @@ export default function Registro() {
                     />
                 </div>
 
-                <div className="grid gap-1">
-                    <label htmlFor="password">Contraseña</label>
+                <div className="auth-pair">
+                    <div className="auth-field">
+                        <label htmlFor="password">Contraseña</label>
 
-                    <input
-                        className="rounded border bg-white p-2"
-                        id="password"
-                        name="password"
-                        type="password"
-                        value={datos.password}
-                        onChange={cambiarCampo}
-                        minLength={8}
-                        maxLength={255}
-                        autoComplete="new-password"
-                        disabled={enviando}
-                        required
-                    />
-                </div>
+                        <input
+                            id="password"
+                            name="password"
+                            type="password"
+                            value={datos.password}
+                            onChange={cambiarCampo}
+                            minLength={8}
+                            maxLength={255}
+                            autoComplete="new-password"
+                            disabled={enviando}
+                            required
+                        />
+                    </div>
 
-                <div className="grid gap-1">
-                    <label htmlFor="password_confirmation">
-                        Confirmar contraseña
-                    </label>
+                    <div className="auth-field">
+                        <label htmlFor="password_confirmation">Confirmar contraseña</label>
 
-                    <input
-                        className="rounded border bg-white p-2"
-                        id="password_confirmation"
-                        name="password_confirmation"
-                        type="password"
-                        value={datos.password_confirmation}
-                        onChange={cambiarCampo}
-                        minLength={8}
-                        maxLength={255}
-                        autoComplete="new-password"
-                        disabled={enviando}
-                        required
-                    />
+                        <input
+                            id="password_confirmation"
+                            name="password_confirmation"
+                            type="password"
+                            value={datos.password_confirmation}
+                            onChange={cambiarCampo}
+                            minLength={8}
+                            maxLength={255}
+                            autoComplete="new-password"
+                            disabled={enviando}
+                            required
+                        />
+                    </div>
                 </div>
 
                 <button
                     type="submit"
                     disabled={enviando}
-                    className="mt-4 rounded bg-[#124277] p-3 text-white disabled:opacity-60"
+                    className="auth-button"
                 >
                     {enviando ? 'Guardando...' : 'Registrarme'}
                 </button>
 
-                <p role="status">{mensaje}</p>
-                <p className="text-center text-sm text-[#555555]">
+                <p role="status" className={`auth-status empty:sr-only ${!enviando && !registroExitoso ? 'auth-status--error' : ''}`}>{mensaje}</p>
+                <p className="auth-form-footer">
                     ¿Ya tienes una cuenta?{' '}
-                    <a href="/login" className="font-semibold text-[#124277] underline">
+                    <a href="/login" className="auth-link">
                         Inicia sesión
                     </a>
                 </p>
             </form>
-        </main>
+        </AuthLayout>
     );
 }

@@ -17,6 +17,14 @@ class User extends Authenticatable
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable;
 
+    /** @var array<string, mixed> */
+    protected $attributes = ['rol' => 'usuario'];
+
+    public function esAdministrador(): bool
+    {
+        return $this->rol === 'admin';
+    }
+
     /**
      * Get the attributes that should be cast.
      *

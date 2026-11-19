@@ -105,16 +105,21 @@ export default function RecoveryCodes() {
     return (
         <section
             aria-labelledby="titulo-recovery"
-            className="mt-6 rounded-2xl bg-white p-6 shadow-sm"
+            className="tarjeta-cuenta perfil-privacidad"
         >
+            <p className="mb-2 inline-flex rounded-full bg-[#d4f0e9] px-2.5 py-1 text-xs font-semibold text-[#0b665d]">Respaldo de acceso</p>
             <h2
                 id="titulo-recovery"
-                className="text-xl font-semibold text-[#124277]"
+                className="text-xl font-bold tracking-tight text-[#10233d]"
             >
                 Códigos de recuperación
             </h2>
 
-            {disponibles !== null && <p className="mt-2 font-medium text-[#1E3A5F]">Códigos disponibles: {disponibles}</p>}
+            {disponibles !== null && (
+                <p className="mt-3 flex w-fit items-center gap-2 rounded-xl border border-[#cbe8e3] bg-white px-3 py-2 text-sm font-medium text-[#123659]">
+                    Códigos disponibles <strong className="text-lg text-[#0b665d]">{disponibles}</strong>
+                </p>
+            )}
 
             <p className="mt-2 text-sm text-[#555555]">
                 Generar un nuevo grupo invalida tus códigos anteriores.
@@ -123,9 +128,9 @@ export default function RecoveryCodes() {
 
             <form
                 onSubmit={generarCodigos}
-                className="mt-4 grid max-w-md gap-3"
+                className="mt-4 grid gap-3"
             >
-                <label htmlFor="recovery-password">Confirma tu contraseña actual</label>
+                <label htmlFor="recovery-password" className="text-sm font-semibold text-[#123659]">Confirma tu contraseña actual</label>
 
                 <input
                     id="recovery-password"
@@ -135,7 +140,7 @@ export default function RecoveryCodes() {
                     onChange={(evento) => setPassword(evento.target.value)}
                     autoComplete="current-password"
                     disabled={enviando}
-                    className="rounded border bg-white p-2"
+                    className="w-full rounded-xl border border-[#ccdae6] bg-white p-2.5 focus-visible:outline-2 focus-visible:outline-[#0b766f]"
                     maxLength={255}
                     required
                 />
@@ -143,13 +148,13 @@ export default function RecoveryCodes() {
                 <button
                     type="submit"
                     disabled={enviando}
-                    className="rounded bg-[#124277] p-3 text-white disabled:opacity-60"
+                    className="rounded-xl bg-[#0b766f] px-4 py-2.5 font-semibold text-white hover:bg-[#095c56] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0b766f] disabled:opacity-60"
                 >
                     {enviando ? 'Generando...' : 'Generar seis códigos'}
                 </button>
             </form>
 
-            <p role="status" className="mt-3 text-sm text-[#555555]">
+            <p role="status" className={mensaje ? 'mt-3 text-sm text-[#555555]' : 'sr-only'}>
                 {mensaje}
             </p>
 
@@ -159,7 +164,7 @@ export default function RecoveryCodes() {
                         {codigos.map((codigo, indice) => (
                             <li
                                 key={codigo}
-                                className="rounded bg-[#F2F4F7] p-3"
+                                className="rounded-lg border border-[#d9e5ee] bg-white p-3 text-sm"
                             >
                                 <span>{indice + 1}. </span>
                                 <code className="break-all">{codigo}</code>
@@ -170,7 +175,7 @@ export default function RecoveryCodes() {
                     <button
                         type="button"
                         onClick={descargarCodigos}
-                        className="mt-4 rounded bg-[#124277] p-3 text-white"
+                        className="mt-4 rounded-xl bg-[#123659] px-4 py-2.5 font-semibold text-white hover:bg-[#0b766f] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#123659]"
                     >
                         Descargar códigos
                     </button>

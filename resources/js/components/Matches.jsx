@@ -1,7 +1,8 @@
 import { useState } from 'react';
+import { diasSemana } from './Horarios.jsx';
 import {
-    botonSocial, botonSocialSecundario, CargaSocial, EncabezadoSocial,
-    enviarSocial, ErrorSocial, formatearFechaSocial, PaginacionSocial, tarjetaSocial, useConsultaSocial,
+    AvatarSocial, botonSocial, botonSocialSecundario, CargaSocial, EncabezadoSocial, enviarSocial, ErrorSocial,
+    formatearFechaSocial, IconoSocial, listaSocial, PaginacionSocial, pestanaSocial, tarjetaSocial, useConsultaSocial,
 } from './SocialComun.jsx';
 
 const secciones = [
@@ -12,17 +13,39 @@ const secciones = [
 ];
 
 const estados = {
-    pendiente: 'Pendiente',
-    aceptado: 'Aceptado',
-    rechazado: 'Rechazado',
-    cancelado: 'Cancelado',
+    pendiente: { texto: 'Pendiente', colores: 'bg-[#fff0d6] text-[#714315]' },
+    aceptado: { texto: 'Aceptado', colores: 'bg-[#dbf5f2] text-[#14534e]' },
+    rechazado: { texto: 'Rechazado', colores: 'bg-rose-50 text-rose-800' },
+    cancelado: { texto: 'Cancelado', colores: 'bg-slate-100 text-slate-700' },
 };
 
 const confirmaciones = {
-    aceptar: 'Match aceptado. Ya pueden enviarse mensajes.',
+    aceptar: 'Match aceptado. Ya puedes consultar su disponibilidad y abrir una conversación.',
     rechazar: 'Solicitud rechazada.',
     cancelar: 'Solicitud cancelada.',
 };
+
+function DisponibilidadMatch({ horarios }) {
+    return (
+        <div className="rounded-xl bg-[#edf4f8] p-3">
+            <p className="text-sm font-semibold text-[#10233d]">Disponibilidad semanal</p>
+            {horarios.length === 0 ? (
+                <p className="mt-1 text-sm text-slate-600">Todavía no ha compartido su horario.</p>
+            ) : (
+                <>
+                    <p className="mt-1 text-xs text-slate-600">Hora de Colombia</p>
+                    <ul className="mt-2 flex flex-wrap gap-2">
+                        {horarios.map(({ dia, inicio, fin }) => (
+                            <li key={dia + '-' + inicio} className="rounded-lg border border-[#d7e4ed] bg-white px-2.5 py-1 text-sm text-[#123659]">
+                                <span className="font-semibold">{diasSemana[dia - 1]}</span> {inicio}–{fin}
+                            </li>
+                        ))}
+                    </ul>
+                </>
+            )}
+        </div>
+    );
+}
 
 export default function Matches() {
     const [filtro, setFiltro] = useState(() => {
@@ -44,7 +67,9 @@ export default function Matches() {
             await enviarSocial('/api/matches/' + id + '/responder', { accion });
             setAviso(confirmaciones[accion]);
 
-            if (filtro.pagina > 1 && consulta.datos.data.length === 1) {
+            if (accion === 'aceptar') {
+                setFiltro({ tipo: 'conexiones', pagina: 1 });
+            } else if (filtro.pagina > 1 && consulta.datos.data.length === 1) {
                 setFiltro(anterior => ({ ...anterior, pagina: anterior.pagina - 1 }));
             } else {
                 consulta.recargar();
@@ -58,57 +83,78 @@ export default function Matches() {
     }
 
     return (
-        <div className="perfil-contenido mt-6 space-y-5">
-            <EncabezadoSocial titulo="Organiza tus conexiones">
+        <div className="perfil-contenido mt-5 space-y-4">
+            <EncabezadoSocial titulo="Organiza tus conexiones" etiqueta="Matches académicos" icono="conexion">
                 Revisa las solicitudes de aprendizaje y abre una conversación cuando haya un match aceptado.
             </EncabezadoSocial>
-
-            <nav aria-label="Secciones de matches" className="flex flex-wrap gap-2">
-                {secciones.map(item => (
-                    <button key={item.id} type="button" aria-pressed={filtro.tipo === item.id}
-                        disabled={procesando !== null}
-                        className={filtro.tipo === item.id ? botonSocial : botonSocialSecundario}
-                        onClick={() => {
-                            setAviso('');
-                            setErrorAccion('');
-                            setFiltro({ tipo: item.id, pagina: 1 });
-                        }}>
-                        {item.nombre}
-                    </button>
-                ))}
-            </nav>
 
             <p role="status" className={aviso ? 'rounded-xl bg-green-50 p-3 text-sm text-green-800' : 'sr-only'}>{aviso}</p>
             {errorAccion && <ErrorSocial error={errorAccion} />}
 
             <section aria-labelledby="matches-seccion" className="space-y-3">
-                <h2 id="matches-seccion" className="text-lg font-bold text-[#124277]">{seccion.nombre}</h2>
+                <div className={tarjetaSocial + ' flex flex-wrap items-center justify-between gap-3'}>
+                    <div className="flex flex-wrap items-center gap-2">
+                        <h2 id="matches-seccion" className="text-lg font-extrabold tracking-tight text-[#10233d]">{seccion.nombre}</h2>
+                        {consulta.datos && (
+                            <span className="rounded-full bg-[#dfeaf4] px-2.5 py-1 text-xs font-bold text-[#123659]" aria-label={consulta.datos.total + ' en esta sección'}>
+                                {consulta.datos.total}
+                            </span>
+                        )}
+                    </div>
+                    <nav aria-label="Secciones de matches" className="flex flex-wrap gap-1 rounded-2xl bg-[#edf4f8] p-1">
+                        {secciones.map(item => (
+                            <button key={item.id} type="button" aria-pressed={filtro.tipo === item.id}
+                                disabled={procesando !== null}
+                                className={pestanaSocial}
+                                onClick={() => {
+                                    setAviso('');
+                                    setErrorAccion('');
+                                    setFiltro({ tipo: item.id, pagina: 1 });
+                                }}>
+                                {item.nombre}
+                            </button>
+                        ))}
+                    </nav>
+                </div>
                 {consulta.cargando ? (
                     <CargaSocial texto="Cargando matches..." />
                 ) : consulta.error ? (
                     <ErrorSocial error={consulta.error} reintentar={consulta.recargar} />
                 ) : consulta.datos.data.length === 0 ? (
-                    <div className={tarjetaSocial}>
-                        <p className="text-sm text-slate-600">{seccion.vacio}</p>
-                        <a href="/buscar-estudiantes" className={'mt-3 ' + botonSocialSecundario}>Buscar estudiantes</a>
+                    <div className={tarjetaSocial + ' flex flex-wrap items-center justify-between gap-3'}>
+                        <div className="flex items-center gap-3">
+                            <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-[#dbf5f2] text-[#0b766f]">
+                                <IconoSocial tipo="conexion" />
+                            </span>
+                            <p className="text-sm text-slate-700">{seccion.vacio}</p>
+                        </div>
+                        <a href="/buscar-estudiantes" className={botonSocialSecundario}>Buscar estudiantes</a>
                     </div>
                 ) : (
-                    <ul className="space-y-3">
+                    <ul className={listaSocial}>
                         {consulta.datos.data.map(match => (
-                            <li key={match.id} className={tarjetaSocial + ' flex flex-wrap items-start justify-between gap-4'}>
-                                <div className="min-w-0">
-                                    <h3 className="font-bold wrap-anywhere text-[#124277]">{match.estudiante.nombre}</h3>
-                                    <p className="mt-1 text-sm text-slate-600">
-                                        Solicitud {match.direccion} · {estados[match.estado]}
-                                    </p>
-                                    {match.actualizado_en && (
-                                        <time dateTime={match.actualizado_en} className="mt-1 block text-xs text-slate-500">
-                                            {formatearFechaSocial(match.actualizado_en)}
-                                        </time>
-                                    )}
+                            <li key={match.id} className={tarjetaSocial + ' grid content-start gap-3'}>
+                                <div className="flex flex-wrap items-start justify-between gap-2">
+                                    <div className="flex min-w-0 items-start gap-3">
+                                        <AvatarSocial nombre={match.estudiante.nombre} />
+                                        <div className="min-w-0">
+                                            <h3 className="leading-tight font-extrabold wrap-anywhere text-[#10233d]">{match.estudiante.nombre}</h3>
+                                            <p className="mt-1 text-sm text-slate-600">Solicitud {match.direccion}</p>
+                                            {match.actualizado_en && (
+                                                <time dateTime={match.actualizado_en} className="mt-1 block text-xs text-slate-500">
+                                                    {formatearFechaSocial(match.actualizado_en)}
+                                                </time>
+                                            )}
+                                        </div>
+                                    </div>
+                                    <span className={'rounded-full px-2.5 py-1 text-xs font-bold ' + estados[match.estado].colores}>
+                                        {estados[match.estado].texto}
+                                    </span>
                                 </div>
 
-                                <div className="flex flex-wrap gap-2">
+                                {match.estado === 'aceptado' && <DisponibilidadMatch horarios={match.estudiante.horarios ?? []} />}
+
+                                <div className="flex empty:hidden flex-wrap gap-2 border-t border-[#e1edf2] pt-3">
                                     {match.estado === 'pendiente' && match.direccion === 'recibida' && (
                                         <>
                                             <button type="button" disabled={procesando !== null} className={botonSocial}
